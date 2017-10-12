@@ -1,61 +1,88 @@
 class FSM {
-    /**
-     * Creates new FSM instance.
-     * @param config
-     */
-    constructor(config) {}
 
-    /**
-     * Returns active state.
-     * @returns {String}
-     */
-    getState() {}
+	constructor(config) {
+		this.initial = config.initial;
+		this.states = config.states;
+		this.activeState = config.initial;
+		this.stack = ['normal'];
+		this.history = 0;
+	}
 
-    /**
-     * Goes to specified state.
-     * @param state
-     */
-    changeState(state) {}
+	getState() {
+		return this.activeState;
+	}
 
-    /**
-     * Changes state according to event transition rules.
-     * @param event
-     */
-    trigger(event) {}
+	changeState(state) {
+		if(state in this.states) {
+			this.activeState = state;
+			this.stack.length = this.history + 1;
+			this.stack.push(this.activeState);
+			this.history++;
+			return;
+		}
+		throw new Error;
+	}
 
-    /**
-     * Resets FSM state to initial.
-     */
-    reset() {}
+	trigger(event) {
+		if(event in this.states[this.activeState].transitions) {
+			this.activeState = this.states[this.activeState].transitions[event];
+			this.stack.length = this.history + 1;
+			this.stack.push(this.activeState);
+			this.history++;
+			return;
+		}
+		throw new Error;
+	}
 
-    /**
-     * Returns an array of states for which there are specified event transition rules.
-     * Returns all states if argument is undefined.
-     * @param event
-     * @returns {Array}
-     */
-    getStates(event) {}
+	reset() {
+		this.activeState = this.initial;
+		this.stack.length = this.history + 1;
+		this.stack.push(this.activeState);
+		this.history++;
+	}
 
-    /**
-     * Goes back to previous state.
-     * Returns false if undo is not available.
-     * @returns {Boolean}
-     */
-    undo() {}
+     getStates(event) {
+     	if(arguments.length == 0) {
+     		var states = [];
+     		for(var i in this.states) {
+     			states.push(i); 
+     		}
+     		return states;
+     	}
+     	var states = [];
+     	for(var i in this.states) {
+     		for(var j in this.states[i].transitions) {
+     			if(j == event) {
+     				states.push(i);
+     			}
+     		}
+     	}
+     	return states;
+     }
 
-    /**
-     * Goes redo to state.
-     * Returns false if redo is not available.
-     * @returns {Boolean}
-     */
-    redo() {}
+     undo() {
+     	if(this.history == 0) {
+     		return false;
+     	}
+     	this.activeState = this.stack[--this.history];
+     	return true;
+     }
 
-    /**
-     * Clears transition history
-     */
-    clearHistory() {}
-}
+     redo() {
+     	if(this.history == this.stack.length - 1) {
+     		return false;
+     	}
+     	this.activeState = this.stack[++this.history];
+     	if(this.history == 0) {
+     		return false;
+     	}
+     	return true;
+     }
 
-module.exports = FSM;
+     clearHistory() {
+     	this.history = 0;
+     	this.stack.length = 1;
+     }
+ }
 
-/** @Created by Uladzimir Halushka **/
+ module.exports = FSM;
